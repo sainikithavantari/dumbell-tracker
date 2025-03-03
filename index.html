@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dumbbell Tracker</title>
+    <title>Dumbbell Movement Tracker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,151 +21,207 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
-        }
-
-        h1, h2 {
+            width: 90%;
+            max-width: 1200px;
             text-align: center;
         }
 
-        form {
-            display: flex;
-            flex-direction: column;
+        h1 {
+            margin-bottom: 20px;
         }
 
-        label {
-            margin-bottom: 5px;
+        .video-container {
+            margin-bottom: 20px;
         }
 
-        input {
-            margin-bottom: 10px;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        video {
+            width: 100%;
+            max-width: 640px;
+            border-radius: 8px;
+            background-color: #000;
         }
 
-        button {
-            padding: 10px;
-            background-color: #28a745;
-            color: #fff;
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            margin: 5px;
             border: none;
             border-radius: 4px;
+            background-color: #28a745;
+            color: #fff;
             cursor: pointer;
+            font-size: 16px;
         }
 
-        button:hover {
+        .controls button:hover {
             background-color: #218838;
         }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
+        .feedback {
+            margin-bottom: 20px;
         }
 
-        li {
-            background-color: #f8f9fa;
+        .feedback h2 {
             margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
-        li button {
-            background-color: #dc3545;
-            border: none;
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
+        #feedbackText {
+            font-size: 18px;
+            color: #333;
         }
 
-        li button:hover {
-            background-color: #c82333;
+        .plot-container {
+            margin-bottom: 20px;
+        }
+
+        .plot-container h2 {
+            margin-bottom: 10px;
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Dumbbell Tracker</h1>
-        
-        <!-- Form to add a new dumbbell exercise -->
-        <form id="exerciseForm">
-            <label for="exerciseName">Exercise Name:</label>
-            <input type="text" id="exerciseName" name="exerciseName" required>
-            
-            <label for="weight">Weight (kg):</label>
-            <input type="number" id="weight" name="weight" required>
-            
-            <label for="reps">Reps:</label>
-            <input type="number" id="reps" name="reps" required>
-            
-            <button type="submit">Add Exercise</button>
-        </form>
+        <h1>Dumbbell Movement Tracker</h1>
 
-        <!-- Display the list of exercises -->
-        <h2>Exercise Log</h2>
-        <ul id="exerciseList"></ul>
+        <!-- Video Feed Section -->
+        <div class="video-container">
+            <video id="videoFeed" autoplay muted></video>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls">
+            <button id="startFeed">Start Live Feed</button>
+            <button id="startRecording">Start Recording</button>
+            <button id="stopRecording">Stop Recording</button>
+            <button id="uploadVideo">Upload Video</button>
+            <button id="analyzeMovement">Analyze Movement</button>
+        </div>
+
+        <!-- Feedback Section -->
+        <div class="feedback">
+            <h2>Feedback</h2>
+            <p id="feedbackText">No feedback yet.</p>
+        </div>
+
+        <!-- Trajectory Plot Section -->
+        <div class="plot-container">
+            <h2>Movement Trajectory</h2>
+            <canvas id="trajectoryPlot"></canvas>
+        </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const exerciseForm = document.getElementById('exerciseForm');
-            const exerciseList = document.getElementById('exerciseList');
+        // JavaScript for Frontend Functionality
 
-            // Fetch and display exercises
-            fetchExercises();
+        // Video Feed
+        const videoFeed = document.getElementById('videoFeed');
+        const startFeedButton = document.getElementById('startFeed');
+        const startRecordingButton = document.getElementById('startRecording');
+        const stopRecordingButton = document.getElementById('stopRecording');
+        const uploadVideoButton = document.getElementById('uploadVideo');
+        const analyzeMovementButton = document.getElementById('analyzeMovement');
+        const feedbackText = document.getElementById('feedbackText');
 
-            // Add new exercise
-            exerciseForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+        let mediaStream;
+        let mediaRecorder;
+        let recordedChunks = [];
 
-                const exerciseName = document.getElementById('exerciseName').value;
-                const weight = document.getElementById('weight').value;
-                const reps = document.getElementById('reps').value;
-
-                const response = await fetch('/api/exercises', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ exerciseName, weight, reps }),
-                });
-
-                if (response.ok) {
-                    fetchExercises();
-                    exerciseForm.reset();
-                }
-            });
-
-            // Fetch exercises from the backend
-            async function fetchExercises() {
-                const response = await fetch('/api/exercises');
-                const exercises = await response.json();
-
-                exerciseList.innerHTML = '';
-                exercises.forEach(exercise => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <span>${exercise.exerciseName} - ${exercise.weight}kg x ${exercise.reps} reps</span>
-                        <button onclick="deleteExercise('${exercise._id}')">Delete</button>
-                    `;
-                    exerciseList.appendChild(li);
-                });
+        // Start Live Feed
+        startFeedButton.addEventListener('click', async () => {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                videoFeed.srcObject = mediaStream;
+                feedbackText.textContent = "Live feed started.";
+            } catch (error) {
+                feedbackText.textContent = "Error accessing camera: " + error.message;
             }
+        });
 
-            // Delete an exercise
-            window.deleteExercise = async (id) => {
-                const response = await fetch(`/api/exercises/${id}`, {
-                    method: 'DELETE',
-                });
+        // Start Recording
+        startRecordingButton.addEventListener('click', () => {
+            if (mediaStream) {
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm' });
 
-                if (response.ok) {
-                    fetchExercises();
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'recorded_video.webm';
+                    a.click();
+                    feedbackText.textContent = "Recording saved.";
+                };
+
+                mediaRecorder.start();
+                feedbackText.textContent = "Recording started.";
+            } else {
+                feedbackText.textContent = "Please start the live feed first.";
+            }
+        });
+
+        // Stop Recording
+        stopRecordingButton.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                feedbackText.textContent = "Recording stopped.";
+            }
+        });
+
+        // Upload Video
+        uploadVideoButton.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'video/*';
+            input.onchange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file);
+                    videoFeed.srcObject = null;
+                    videoFeed.src = url;
+                    feedbackText.textContent = "Video uploaded and ready for analysis.";
                 }
             };
+            input.click();
         });
+
+        // Analyze Movement
+        analyzeMovementButton.addEventListener('click', () => {
+            feedbackText.textContent = "Analyzing movement...";
+            // Simulate analysis (replace with actual API call to backend)
+            setTimeout(() => {
+                feedbackText.textContent = "Analysis complete: Ensure full arm extension for better results.";
+            }, 2000);
+        });
+
+        // Trajectory Plot (Placeholder)
+        const canvas = document.getElementById('trajectoryPlot');
+        const ctx = canvas.getContext('2d');
+
+        ctx.beginPath();
+        ctx.moveTo(50, 250);
+        ctx.lineTo(150, 150);
+        ctx.lineTo(250, 250);
+        ctx.strokeStyle = '#28a745';
+        ctx.lineWidth = 2;
+        ctx.stroke();
     </script>
 </body>
 </html>
