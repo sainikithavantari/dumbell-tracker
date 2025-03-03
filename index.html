@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dumbbell Movement Tracker</title>
+    <title>Advanced Dumbbell Tracker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,7 +13,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
         }
 
         .container {
@@ -88,11 +88,31 @@
             border: 1px solid #ccc;
             border-radius: 8px;
         }
+
+        .history {
+            margin-bottom: 20px;
+        }
+
+        .history h2 {
+            margin-bottom: 10px;
+        }
+
+        .history ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .history li {
+            background-color: #f8f9fa;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Dumbbell Movement Tracker</h1>
+        <h1>Advanced Dumbbell Tracker</h1>
 
         <!-- Video Feed Section -->
         <div class="video-container">
@@ -119,10 +139,18 @@
             <h2>Movement Trajectory</h2>
             <canvas id="trajectoryPlot"></canvas>
         </div>
+
+        <!-- Workout History Section -->
+        <div class="history">
+            <h2>Workout History</h2>
+            <ul id="workoutHistory">
+                <li>No workouts recorded yet.</li>
+            </ul>
+        </div>
     </div>
 
     <script>
-        // JavaScript for Frontend Functionality
+        // JavaScript for Advanced Frontend Functionality
 
         // Video Feed
         const videoFeed = document.getElementById('videoFeed');
@@ -132,6 +160,7 @@
         const uploadVideoButton = document.getElementById('uploadVideo');
         const analyzeMovementButton = document.getElementById('analyzeMovement');
         const feedbackText = document.getElementById('feedbackText');
+        const workoutHistory = document.getElementById('workoutHistory');
 
         let mediaStream;
         let mediaRecorder;
@@ -168,6 +197,7 @@
                     a.download = 'recorded_video.webm';
                     a.click();
                     feedbackText.textContent = "Recording saved.";
+                    addWorkoutToHistory("Workout on " + new Date().toLocaleString());
                 };
 
                 mediaRecorder.start();
@@ -210,6 +240,13 @@
                 feedbackText.textContent = "Analysis complete: Ensure full arm extension for better results.";
             }, 2000);
         });
+
+        // Add Workout to History
+        function addWorkoutToHistory(workout) {
+            const li = document.createElement('li');
+            li.textContent = workout;
+            workoutHistory.appendChild(li);
+        }
 
         // Trajectory Plot (Placeholder)
         const canvas = document.getElementById('trajectoryPlot');
