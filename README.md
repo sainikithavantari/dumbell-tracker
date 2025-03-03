@@ -67,4 +67,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - [pyttsx3](https://pypi.org/project/pyttsx3/) for text-to-speech functionality.
 
 ## Contact
-For any questions or feedback, please contact [your-email@example.com](mailto:sainikithavantari@gmail.com).
+For any questions or feedback, please contact [mail](mailto:sainikithavantari@gmail.com).
