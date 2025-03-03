@@ -5,11 +5,12 @@ import math
 import pyttsx3
 import os
 from datetime import datetime
-import matplotlib.pyplot as plt  # Add this import
+import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import QApplication, QLabel, QPushButton, QFileDialog, QVBoxLayout, QWidget, QHBoxLayout
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import QTimer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
 
 class DumbbellTrackerGUI(QWidget):
     def __init__(self):
@@ -26,7 +27,7 @@ class DumbbellTrackerGUI(QWidget):
         self.mp_pose = mp.solutions.pose
         self.pose = self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
         self.mp_drawing = mp.solutions.drawing_utils
-        
+
         # Initialize text-to-speech engine
         self.engine = pyttsx3.init()
 
@@ -86,8 +87,8 @@ class DumbbellTrackerGUI(QWidget):
         dot_product = ab[0] * bc[0] + ab[1] * bc[1]
 
         # Magnitudes of vectors AB and BC
-        magnitude_ab = math.sqrt(ab[0]**2 + ab[1]**2)
-        magnitude_bc = math.sqrt(bc[0]**2 + bc[1]**2)
+        magnitude_ab = math.sqrt(ab[0] ** 2 + ab[1] ** 2)
+        magnitude_bc = math.sqrt(bc[0] ** 2 + bc[1] ** 2)
 
         # Calculate angle in radians
         angle = math.acos(dot_product / (magnitude_ab * magnitude_bc))
@@ -179,6 +180,17 @@ class DumbbellTrackerGUI(QWidget):
                 self.video_writer = None
             print("Recording stopped.")
 
+    def upload_video(self):
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, "Upload Video", "", "Video Files (*.mp4 *.avi *.mov);;All Files (*)", options=options)
+        if file_path:
+            self.capture = cv2.VideoCapture(file_path)
+            self.timer.start(30)
+
+    def analyze_movement(self):
+        # Placeholder for movement analysis logic
+        print("Analyzing movement...")
+
     def closeEvent(self, event):
         if self.capture:
             self.capture.release()
@@ -188,6 +200,9 @@ class DumbbellTrackerGUI(QWidget):
         cv2.destroyAllWindows()
         event.accept()
 
-    def upload_video(self):
-        options = QFileDialog.Options()
-        file_path,
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = DumbbellTrackerGUI()
+    window.show()
+    sys.exit(app.exec_())
